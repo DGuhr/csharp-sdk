@@ -79,6 +79,19 @@ builder.Services.AddHttpClient("WeatherApi", client =>
 
 var app = builder.Build();
 
+app.Use(async (ctx, next) =>
+{
+    if (ctx.Request.Path == "/") // MCP endpoint lives here , should be /mcp right?
+    {
+        var origin = ctx.Request.Headers["Origin"].ToString();
+        var accept = ctx.Request.Headers["Accept"].ToString();
+        Console.WriteLine($"MCP {ctx.Request.Method} {ctx.Request.Path} " +
+                          $"Origin='{(string.IsNullOrEmpty(origin) ? "(none)" : origin)}' " +
+                          $"Accept='{accept}'");
+    }
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 

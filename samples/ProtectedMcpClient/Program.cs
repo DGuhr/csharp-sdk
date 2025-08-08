@@ -19,6 +19,7 @@ var sharedHandler = new SocketsHttpHandler
     PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1)
 };
 var httpClient = new HttpClient(sharedHandler);
+httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Origin", "http://evil.example");
 
 var consoleLoggerFactory = LoggerFactory.Create(builder =>
 {
