@@ -31,7 +31,7 @@ var transport = new SseClientTransport(new()
     Name = "Secure Weather Client",
     OAuth = new()
     {
-        ClientName = "ProtectedMcpClient",
+        ClientName = "DynamicProtectedMcpClient",
         RedirectUri = new Uri("http://localhost:1179/callback"),
         AuthorizationRedirectDelegate = HandleAuthorizationUrlAsync,
     }

@@ -4,11 +4,12 @@ using ModelContextProtocol.AspNetCore.Authentication;
 using ProtectedMcpServer.Tools;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using ModelContextProtocol.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var serverUrl = "http://localhost:7071/";
-var inMemoryOAuthServerUrl = "https://localhost:7029";
+var keycloakOAuthServerUrl = "https://localhost:3000/realms/mcptest";
 
 builder.Services.AddAuthentication(options =>
 {
@@ -18,7 +19,7 @@ builder.Services.AddAuthentication(options =>
 .AddJwtBearer(options =>
 {
     // Configure to validate tokens from our in-memory OAuth server
-    options.Authority = inMemoryOAuthServerUrl;
+    options.Authority = keycloakOAuthServerUrl;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -26,13 +27,18 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidAudience = serverUrl, // Validate that the audience matches the resource metadata as suggested in RFC 8707
-        ValidIssuer = inMemoryOAuthServerUrl,
+        ValidIssuer = keycloakOAuthServerUrl,
         NameClaimType = "name",
         RoleClaimType = "roles"
     };
 
     options.Events = new JwtBearerEvents
     {
+        OnMessageReceived = context =>
+        {
+            Console.WriteLine("Token received: " + context.Token);
+            return Task.CompletedTask;
+        },
         OnTokenValidated = context =>
         {
             var name = context.Principal?.Identity?.Name ?? "unknown";
@@ -54,11 +60,11 @@ builder.Services.AddAuthentication(options =>
 })
 .AddMcp(options =>
 {
-    options.ResourceMetadata = new()
+    options.ResourceMetadata = new ProtectedResourceMetadata
     {
         Resource = new Uri(serverUrl),
         ResourceDocumentation = new Uri("https://docs.example.com/api/weather"),
-        AuthorizationServers = { new Uri(inMemoryOAuthServerUrl) },
+        AuthorizationServers = { new Uri(keycloakOAuthServerUrl) },
         ScopesSupported = ["mcp:tools"],
     };
 });
@@ -86,7 +92,7 @@ app.UseAuthorization();
 app.MapMcp().RequireAuthorization();
 
 Console.WriteLine($"Starting MCP server with authorization at {serverUrl}");
-Console.WriteLine($"Using in-memory OAuth server at {inMemoryOAuthServerUrl}");
+Console.WriteLine($"Using IdP / OAuth Server at {keycloakOAuthServerUrl}");
 Console.WriteLine($"Protected Resource Metadata URL: {serverUrl}.well-known/oauth-protected-resource");
 Console.WriteLine("Press Ctrl+C to stop the server");
 
