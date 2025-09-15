@@ -36,7 +36,7 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            Console.WriteLine("Token received: " + context.Token);
+            Console.WriteLine("Token received: " + context.HttpContext.Request.Headers.Authorization);
             return Task.CompletedTask;
         },
         OnTokenValidated = context =>
